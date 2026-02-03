@@ -59,7 +59,7 @@ python -m nanochat.dataset -n 8
 python -m nanochat.dataset -n 370 &
 DATASET_DOWNLOAD_PID=$!
 # train the tokenizer with vocab size 2**15 = 32768 on ~2B characters of data
-python -m scripts.tok_train
+python -m scripts.tok_train --vocab-size=4096
 # evaluate the tokenizer (report compression ratio etc.)
 python -m scripts.tok_eval
 
@@ -78,10 +78,10 @@ echo "Waiting for dataset download to complete..."
 wait $DATASET_DOWNLOAD_PID
 
 # Number of processes/GPUs to use
-NPROC_PER_NODE=8
+NPROC_PER_NODE=4
 
 # pretrain the d20 model
-torchrun --standalone --nproc_per_node=$NPROC_PER_NODE -m scripts.base_train -- --depth=20 --target-param-data-ratio=20 --run=$WANDB_RUN
+torchrun --standalone --nproc_per_node=$NPROC_PER_NODE -m scripts.base_train --  --depth=4 --max-seq-len=128 --device-batch-size=1 --eval-tokens=128 --core-metric-every=-1 --total-batch-size=1024 --num-iterations=4 --target-param-data-ratio=20 --run=$WANDB_RUN
 # evaluate the model on a larger chunk of train/val data and draw some samples
 torchrun --standalone --nproc_per_node=$NPROC_PER_NODE -m scripts.base_loss
 # evaluate the model on CORE tasks
